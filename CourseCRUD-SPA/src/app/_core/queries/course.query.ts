@@ -7,8 +7,4 @@ export class CourseQuery extends QueryEntity<CourseState> {
   constructor(protected store: CourseStore) {
     super(store);
   }
-
-  selectAreCoursesLoaded$ = this.select(state => {
-    return state.areCoursesLoaded;
-  });
 }

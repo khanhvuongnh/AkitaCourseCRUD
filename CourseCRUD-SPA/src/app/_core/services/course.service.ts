@@ -18,7 +18,7 @@ export class CourseService {
   getAllCourses() {
     return this.http.get<Course[]>(`${this.apiUrl}/Course/GetAllCourses`).pipe(
       tap(courses => {
-        this.courseStore.loadCourses(courses, true);
+        this.courseStore.set(courses);
       })
     );
   }
