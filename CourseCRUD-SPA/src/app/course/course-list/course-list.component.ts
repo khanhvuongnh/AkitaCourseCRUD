@@ -16,7 +16,6 @@ export class CourseListComponent implements OnInit, OnDestroy {
   isUpdateActivated = false;
   subscription: Subscription = new Subscription();
   courses: Course[];
-  hasCourses: boolean;
 
   constructor(
     private courseService: CourseService,
