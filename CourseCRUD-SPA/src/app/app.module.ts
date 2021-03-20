@@ -10,6 +10,7 @@ import { CourseModule } from './course/course.module';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SnotifyModule, SnotifyService, ToastDefaults } from 'ng-snotify';
+import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -26,6 +27,7 @@ import { SnotifyModule, SnotifyService, ToastDefaults } from 'ng-snotify';
     SnotifyModule
   ],
   providers: [
+    { provide: LocationStrategy, useClass: HashLocationStrategy },
     { provide: 'SnotifyToastConfig', useValue: ToastDefaults },
     SnotifyService
   ],

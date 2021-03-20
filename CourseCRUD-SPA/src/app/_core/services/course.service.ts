@@ -16,7 +16,7 @@ export class CourseService {
   ) { }
 
   getAllCourses() {
-    return this.http.get<Course[]>(`${this.apiUrl}/Course/GetAllCourses`).pipe(
+    return this.http.get<Course[]>(`${this.apiUrl}Course/GetAllCourses`).pipe(
       tap(courses => {
         this.courseStore.set(courses);
       })
@@ -24,7 +24,7 @@ export class CourseService {
   }
 
   createCourse(course: Course): Observable<Course> {
-    return this.http.post<Course>(`${this.apiUrl}/Course/CreateCourse`, course).pipe(
+    return this.http.post<Course>(`${this.apiUrl}Course/CreateCourse`, course).pipe(
       tap(value => {
         this.courseStore.add(value);
       })
@@ -32,7 +32,7 @@ export class CourseService {
   }
 
   deleteCourse(courseId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/Course/DeleteCourse/${courseId}`).pipe(
+    return this.http.get(`${this.apiUrl}Course/DeleteCourse/${courseId}`).pipe(
       tap(result => {
         this.courseStore.remove(courseId);
       })
@@ -40,7 +40,7 @@ export class CourseService {
   }
 
   updateCourse(course: Course): Observable<any> {
-    return this.http.post(`${this.apiUrl}/Course/UpdateCourse`, course).pipe(
+    return this.http.post(`${this.apiUrl}Course/UpdateCourse`, course).pipe(
       tap(result => {
         this.courseStore.update(course.id, course);
       })

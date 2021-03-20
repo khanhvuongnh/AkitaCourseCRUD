@@ -30,7 +30,7 @@ export class CreateCourseComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(() => {
         this.alertUtilityService.success('Course was successfully created.', 'Success!');
-        this.router.navigateByUrl('/courses');
+        this.router.navigateByUrl('/course');
       }, error => {
         this.alertUtilityService.error('Creating course failed on save.', 'Error!');
         console.log(error);
