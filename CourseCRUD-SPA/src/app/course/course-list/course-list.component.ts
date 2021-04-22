@@ -1,11 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, timer } from 'rxjs';
+import { switchMap, takeUntil } from 'rxjs/operators';
 import { Course } from 'src/app/_core/models/course.model';
 import { CourseQuery } from 'src/app/_core/queries/course.query';
-import { AlertUtilityService } from 'src/app/_core/services/alert-utility.service';
 import { CourseService } from 'src/app/_core/services/course.service';
+import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify.service';
+import { CourseStore } from 'src/app/_core/stores/course.store';
 
 @Component({
   selector: 'app-courses-list',
@@ -21,15 +23,22 @@ export class CourseListComponent implements OnInit, OnDestroy {
     private courseService: CourseService,
     private courseQuery: CourseQuery,
     private spinnerService: NgxSpinnerService,
-    private alertUtitlyService: AlertUtilityService
+    private snotifyService: CustomNgSnotifyService,
+    private courseStore: CourseStore,
+    private router: Router
   ) { }
 
   ngOnInit() {
+    // Delay 1s before load data
+    timer(1000).pipe(switchMap(() => this.courseService.getAllCourses())).subscribe();
+
+    // Create a 'isLoading' subscription
     this.courseQuery
       .selectLoading()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(isLoading => isLoading ? this.spinnerService.show() : this.spinnerService.hide());
 
+    // Create a 'entities' subscription
     this.courseQuery
       .selectAll()
       .pipe(takeUntil(this.unsubscribe$))
@@ -37,36 +46,25 @@ export class CourseListComponent implements OnInit, OnDestroy {
   }
 
   deleteCourse(courseId: string) {
-    this.alertUtitlyService.confirm('Are you sure you want to delete this record?', 'Delete Course', () => {
+    this.snotifyService.confirm('Are you sure you want to delete this record?', 'Delete Course', () => {
       this.courseService
         .deleteCourse(courseId)
         .pipe(takeUntil(this.unsubscribe$))
         .subscribe(() => {
-          this.alertUtitlyService.success('Course was successfully deleted.', 'Success!')
+          this.snotifyService.success('Course was successfully deleted.', 'Success!')
         }, error => {
-          this.alertUtitlyService.error('Deleting course failed on save.', 'Error');
+          this.snotifyService.error('Deleting course failed on save.', 'Error');
           console.log(error);
         });
     });
   }
 
-  showUpdateForm(course: Course) {
-    this.courseToBeUpdated = { ...course };
-    this.isUpdateActivated = true;
-  }
+  goToUpdate(id: string) {
+    // Set active to an entity by id
+    this.courseStore.setActive(id);
 
-  updateCourse(updateForm: any) {
-    this.courseService
-      .updateCourse(updateForm.value)
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe(() => {
-        this.alertUtitlyService.success('Course was successfully updated.', 'Success!');
-      }, error => {
-        this.alertUtitlyService.error('Updating course failed on save.', 'Error');
-        console.log(error);
-      });
-    this.isUpdateActivated = false;
-    this.courseToBeUpdated = null;
+    // Navigate to update page
+    this.router.navigate(['/update']);
   }
 
   ngOnDestroy() {

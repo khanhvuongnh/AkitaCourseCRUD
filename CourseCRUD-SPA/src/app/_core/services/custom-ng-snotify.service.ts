@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SnotifyPosition, SnotifyService, SnotifyToastConfig } from 'ng-snotify';
 
 @Injectable({ providedIn: 'root' })
-export class AlertUtilityService {
+export class CustomNgSnotifyService {
   config: SnotifyToastConfig = {
     bodyMaxLength: 300,
     titleMaxLength: 100,
