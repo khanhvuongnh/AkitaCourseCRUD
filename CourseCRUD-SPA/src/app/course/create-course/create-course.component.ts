@@ -4,9 +4,12 @@ import * as uuid from 'uuid';
 import { Router } from '@angular/router';
 import { Course } from 'src/app/_core/models/course.model';
 import { CourseService } from 'src/app/_core/services/course.service';
-import { takeUntil } from 'rxjs/operators';
+import { delay, takeUntil } from 'rxjs/operators';
 import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CoursesStore } from 'src/app/_core/stores/course.store';
+import { CoursesQuery } from 'src/app/_core/queries/course.query';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-create-course',
@@ -20,12 +23,20 @@ export class CreateCourseComponent implements OnInit, OnDestroy {
     private courseService: CourseService,
     private router: Router,
     private snotifyService: CustomNgSnotifyService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private coursesStore: CoursesStore,
+    private coursesQuery: CoursesQuery,
+    private spinnerService: NgxSpinnerService
   ) {
     this.initForm();
   }
 
   ngOnInit() {
+    // Create a 'isLoading' subscription
+    this.coursesQuery
+      .selectLoading()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(isLoading => isLoading ? this.spinnerService.show() : this.spinnerService.hide());
   }
 
   initForm() {
@@ -37,16 +48,21 @@ export class CreateCourseComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(course: Course) {
+    this.coursesStore.setLoading(true);
     this.courseService
-      .createCourse(course)
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe(() => {
-        this.snotifyService.success('Course was successfully created.', 'Success!');
-        this.router.navigateByUrl('/course');
-      }, error => {
-        this.snotifyService.error('Creating course failed on save.', 'Error!');
-        console.log(error);
-      });
+      .create(course)
+      .pipe(
+        delay(500),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(res => {
+        if (res) {
+          this.snotifyService.success('Course was successfully created.', 'Success!');
+          this.router.navigateByUrl('/course');
+        } else {
+          this.snotifyService.error('Creating course failed on save.', 'Error!');
+        }
+      }, error => console.error(error), () => this.coursesStore.setLoading(false));
   }
 
   ngOnDestroy() {

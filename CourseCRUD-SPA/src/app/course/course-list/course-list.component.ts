@@ -2,12 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { Subject, timer } from 'rxjs';
-import { switchMap, takeUntil } from 'rxjs/operators';
+import { delay, switchMap, takeUntil } from 'rxjs/operators';
 import { Course } from 'src/app/_core/models/course.model';
-import { CourseQuery } from 'src/app/_core/queries/course.query';
+import { CoursesQuery } from 'src/app/_core/queries/course.query';
 import { CourseService } from 'src/app/_core/services/course.service';
 import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify.service';
-import { CourseStore } from 'src/app/_core/stores/course.store';
+import { CoursesStore } from 'src/app/_core/stores/course.store';
+import { Pagination } from 'src/app/_core/utilities/pagination';
 
 @Component({
   selector: 'app-courses-list',
@@ -17,54 +18,86 @@ export class CourseListComponent implements OnInit, OnDestroy {
   courseToBeUpdated: Course;
   isUpdateActivated = false;
   courses: Course[];
+  pagination: Pagination;
   private readonly unsubscribe$: Subject<void> = new Subject();
 
   constructor(
     private courseService: CourseService,
-    private courseQuery: CourseQuery,
+    private coursesQuery: CoursesQuery,
     private spinnerService: NgxSpinnerService,
     private snotifyService: CustomNgSnotifyService,
-    private courseStore: CourseStore,
+    private coursesStore: CoursesStore,
     private router: Router
   ) { }
 
   ngOnInit() {
-    // Delay 1s before load data
-    timer(1000).pipe(switchMap(() => this.courseService.getAllCourses())).subscribe();
-
     // Create a 'isLoading' subscription
-    this.courseQuery
+    this.coursesQuery
       .selectLoading()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(isLoading => isLoading ? this.spinnerService.show() : this.spinnerService.hide());
 
     // Create a 'entities' subscription
-    this.courseQuery
+    this.coursesQuery
       .selectAll()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(courses => this.courses = courses);
+
+    // Create a 'pagination' subscription
+    this.coursesQuery
+      .select(state => state.pagination)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(pagination => this.pagination = pagination);
+
+    // Delay 1s before load data
+    if (!this.coursesQuery.hasEntity()) {
+      timer(1000)
+        .pipe(
+          switchMap(() => this.courseService.getAll(this.pagination)),
+          takeUntil(this.unsubscribe$))
+        .subscribe();
+    } else {
+      this.loadData();
+    }
   }
 
-  deleteCourse(courseId: string) {
+  loadData() {
+    this.courseService
+      .getAll(this.pagination)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe();
+  }
+
+  deleteCourse(id: string) {
     this.snotifyService.confirm('Are you sure you want to delete this record?', 'Delete Course', () => {
+      this.coursesStore.setLoading(true);
       this.courseService
-        .deleteCourse(courseId)
-        .pipe(takeUntil(this.unsubscribe$))
-        .subscribe(() => {
-          this.snotifyService.success('Course was successfully deleted.', 'Success!')
-        }, error => {
-          this.snotifyService.error('Deleting course failed on save.', 'Error');
-          console.log(error);
-        });
+        .delete(id)
+        .pipe(
+          delay(500),
+          takeUntil(this.unsubscribe$))
+        .subscribe(res => {
+          if (res) {
+            this.snotifyService.success('Course was successfully deleted.', 'Success!');
+            this.loadData();
+          } else {
+            this.snotifyService.error('Deleting course failed on save.', 'Error');
+          }
+        }, error => console.error(error), () => this.coursesStore.setLoading(false));
     });
   }
 
   goToUpdate(id: string) {
     // Set active to an entity by id
-    this.courseStore.setActive(id);
+    this.coursesStore.setActive(id);
 
     // Navigate to update page
     this.router.navigate(['/update']);
+  }
+
+  pageChanged(event: any) {
+    this.pagination.currentPage = event.page;
+    this.loadData();
   }
 
   ngOnDestroy() {

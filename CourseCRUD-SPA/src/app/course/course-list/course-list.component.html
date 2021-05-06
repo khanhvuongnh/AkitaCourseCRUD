@@ -21,4 +21,9 @@
       </tr>
     </tbody>
   </table>
+  <pagination *ngIf="pagination.totalPage > 1" [boundaryLinks]="true" [totalItems]="pagination.totalCount"
+    [(ngModel)]="pagination.currentPage"
+    [itemsPerPage]="pagination.pageSize" (pageChanged)="pageChanged($event)" previousText="&lsaquo;"
+    nextText="&rsaquo;" firstText="&laquo;" lastText="&raquo;" [maxSize]=5>
+  </pagination>
 </div>

@@ -1,10 +1,10 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Course } from '../models/course.model';
-import { CourseStore } from '../stores/course.store';
+import { CoursesStore } from '../stores/course.store';
 import { tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { Pagination, PaginationResult } from '../utilities/pagination';
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -12,38 +12,31 @@ export class CourseService {
 
   constructor(
     private http: HttpClient,
-    private courseStore: CourseStore
+    private coursesStore: CoursesStore
   ) { }
 
-  getAllCourses() {
-    return this.http.get<Course[]>(`${this.apiUrl}Course/GetAllCourses`).pipe(
-      tap(courses => {
-        this.courseStore.set(courses);
+  getAll(pagination: Pagination) {
+    let params = new HttpParams()
+      .set('pageNumber', pagination.currentPage.toString())
+      .set('pageSize', pagination.pageSize.toString());
+
+    return this.http.get<PaginationResult<Course>>(`${this.apiUrl}/Course`, { params }).pipe(
+      tap(res => {
+        this.coursesStore.set(res.result);
+        this.coursesStore.update({ pagination: res.pagination });
       })
     );
   }
 
-  createCourse(course: Course): Observable<Course> {
-    return this.http.post<Course>(`${this.apiUrl}Course/CreateCourse`, course).pipe(
-      tap(value => {
-        this.courseStore.add(value);
-      })
-    );
+  create(course: Course) {
+    return this.http.post<boolean>(`${this.apiUrl}/Course`, course);
   }
 
-  deleteCourse(courseId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}Course/DeleteCourse/${courseId}`).pipe(
-      tap(result => {
-        this.courseStore.remove(courseId);
-      })
-    );
+  delete(id: string) {
+    return this.http.delete<boolean>(`${this.apiUrl}/Course/${id}`);
   }
 
-  updateCourse(course: Course): Observable<any> {
-    return this.http.post(`${this.apiUrl}Course/UpdateCourse`, course).pipe(
-      tap(result => {
-        this.courseStore.update(course.id, course);
-      })
-    );
+  update(course: Course) {
+    return this.http.put<boolean>(`${this.apiUrl}/Course/${course.id}`, course);
   }
 }

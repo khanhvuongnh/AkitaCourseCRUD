@@ -1,6 +1,5 @@
 import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
-import { CourseResolver } from "../_core/resolvers/course.resolver";
 import { CourseListComponent } from "./course-list/course-list.component";
 import { CreateCourseComponent } from "./create-course/create-course.component";
 import { UpdateCourseComponent } from "./update-course/update-course.component";

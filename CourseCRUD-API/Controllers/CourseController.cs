@@ -4,6 +4,7 @@ using CourseCRUD_API.Data;
 using CourseCRUD_API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using CourseCRUD_API.Helpers.Utilities;
 
 namespace CourseCRUD_API.Controllers
 {
@@ -18,39 +19,46 @@ namespace CourseCRUD_API.Controllers
             this.db = db;
         }
 
-        [HttpGet("GetAllCourses")]
-        public async Task<IActionResult> GetAllCourses()
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
         {
-            return Ok(await db.Course.ToListAsync());
+            var courses = await PageListUtility<Course>.PageListAsync(db.Course.OrderBy(x => x.Name), pagination.PageNumber, pagination.PageSize);
+            return Ok(courses);
         }
 
-        [HttpGet("GetCourse/{id}")]
-        public async Task<IActionResult> GetCourse(string id)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] Course course)
         {
-            return Ok(await db.Course.Where(x => x.Id == id).FirstOrDefaultAsync());
-        }
+            var item = await db.Course.AnyAsync(x => x.Id == course.Id);
+            if (item)
+                return Ok(false);
 
-        [HttpPost("CreateCourse")]
-        public async Task<IActionResult> CreateCourse([FromBody] Course course)
-        {
             db.Course.Add(course);
-            await db.SaveChangesAsync();
-            return Ok(course);
+            var result = await db.SaveChangesAsync() > 0;
+            return Ok(result);
         }
 
-        [HttpGet("DeleteCourse/{id}")]
-        public async Task<IActionResult> DeleteCourse(string id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
         {
             var course = await db.Course.Where(x => x.Id == id).FirstOrDefaultAsync();
+            if (course == null)
+                return Ok(false);
+
             db.Course.Remove(course);
-            return Ok(await db.SaveChangesAsync() > 0);
+            var result = await db.SaveChangesAsync() > 0;
+            return Ok(result);
         }
 
-        [HttpPost("UpdateCourse")]
-        public async Task<IActionResult> UpdateCourse([FromBody] Course course)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(string id, [FromBody] Course course)
         {
+            if (id != course.Id)
+                return Ok(false);
+
             db.Course.Update(course);
-            return Ok(await db.SaveChangesAsync() > 0);
+            var result = await db.SaveChangesAsync() > 0;
+            return Ok(result);
         }
     }
 }

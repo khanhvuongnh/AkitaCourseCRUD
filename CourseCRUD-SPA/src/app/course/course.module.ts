@@ -6,6 +6,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { CourseRoutingModule } from './course-routing.module';
 import { UpdateCourseComponent } from './update-course/update-course.component';
+import { PaginationModule } from 'ngx-bootstrap/pagination';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { UpdateCourseComponent } from './update-course/update-course.component';
     FormsModule,
     HttpClientModule,
     CourseRoutingModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PaginationModule.forRoot()
   ]
 })
 export class CourseModule { }
