@@ -57,14 +57,25 @@ export class CourseListComponent implements OnInit, OnDestroy {
           takeUntil(this.unsubscribe$))
         .subscribe();
     } else {
+      let pagination = { ...this.pagination };
+      pagination.currentPage = 1;
+      this.coursesStore.update({ pagination });
       this.loadData();
     }
   }
 
   loadData() {
+    let pagination = { ...this.pagination };
     this.courseService
       .getAll(this.pagination)
-      .pipe(takeUntil(this.unsubscribe$))
+      .pipe(
+        switchMap(res => {
+          if (res.pagination.currentPage > res.pagination.totalPage) {
+            pagination.currentPage = res.pagination.totalPage
+          }
+          return this.courseService.getAll(pagination)
+        }),
+        takeUntil(this.unsubscribe$))
       .subscribe();
   }
 
