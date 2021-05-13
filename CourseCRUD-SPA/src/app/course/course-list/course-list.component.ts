@@ -1,25 +1,26 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { Subject, timer } from 'rxjs';
-import { delay, switchMap, takeUntil } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { Course } from 'src/app/_core/models/course.model';
 import { CoursesQuery } from 'src/app/_core/queries/course.query';
 import { CourseService } from 'src/app/_core/services/course.service';
 import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify.service';
+import { SignalrService } from 'src/app/_core/services/signalr.service';
 import { CoursesStore } from 'src/app/_core/stores/course.store';
 import { Pagination } from 'src/app/_core/utilities/pagination';
 
+@UntilDestroy()
 @Component({
   selector: 'app-courses-list',
   templateUrl: './course-list.component.html'
 })
-export class CourseListComponent implements OnInit, OnDestroy {
+export class CourseListComponent implements OnInit {
   courseToBeUpdated: Course;
   isUpdateActivated = false;
   courses: Course[];
   pagination: Pagination;
-  private readonly unsubscribe$: Subject<void> = new Subject();
 
   constructor(
     private courseService: CourseService,
@@ -27,41 +28,30 @@ export class CourseListComponent implements OnInit, OnDestroy {
     private spinnerService: NgxSpinnerService,
     private snotifyService: CustomNgSnotifyService,
     private coursesStore: CoursesStore,
-    private router: Router
+    private router: Router,
+    private signalRService: SignalrService
   ) { }
 
   ngOnInit() {
-    // Create a 'isLoading' subscription
-    this.coursesQuery
-      .selectLoading()
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe(isLoading => isLoading ? this.spinnerService.show() : this.spinnerService.hide());
-
     // Create a 'entities' subscription
     this.coursesQuery
       .selectAll()
-      .pipe(takeUntil(this.unsubscribe$))
+      .pipe(untilDestroyed(this))
       .subscribe(courses => this.courses = courses);
 
     // Create a 'pagination' subscription
     this.coursesQuery
       .select(state => state.pagination)
-      .pipe(takeUntil(this.unsubscribe$))
+      .pipe(untilDestroyed(this))
       .subscribe(pagination => this.pagination = pagination);
 
-    // Delay 1s before load data
-    if (!this.coursesQuery.hasEntity()) {
-      timer(1000)
-        .pipe(
-          switchMap(() => this.courseService.getAll(this.pagination)),
-          takeUntil(this.unsubscribe$))
-        .subscribe();
-    } else {
-      let pagination = { ...this.pagination };
-      pagination.currentPage = 1;
-      this.coursesStore.update({ pagination });
-      this.loadData();
-    }
+    // Create a 'signalR' subscription
+    this.signalRService.courseReload
+      .pipe(untilDestroyed(this))
+      .subscribe(isReload => { if (isReload) this.loadData() });
+
+    // Load data
+    this.loadData();
   }
 
   loadData() {
@@ -70,31 +60,27 @@ export class CourseListComponent implements OnInit, OnDestroy {
       .getAll(this.pagination)
       .pipe(
         switchMap(res => {
-          if (res.pagination.currentPage > res.pagination.totalPage) {
-            pagination.currentPage = res.pagination.totalPage
-          }
+          pagination.currentPage = res.pagination.currentPage > res.pagination.totalPage ? res.pagination.totalPage : res.pagination.currentPage;
           return this.courseService.getAll(pagination)
         }),
-        takeUntil(this.unsubscribe$))
+        untilDestroyed(this))
       .subscribe();
   }
 
   deleteCourse(id: string) {
     this.snotifyService.confirm('Are you sure you want to delete this record?', 'Delete Course', () => {
-      this.coursesStore.setLoading(true);
+      this.spinnerService.show();
       this.courseService
         .delete(id)
-        .pipe(
-          delay(500),
-          takeUntil(this.unsubscribe$))
+        .pipe(untilDestroyed(this))
         .subscribe(res => {
-          if (res) {
-            this.snotifyService.success('Course was successfully deleted.', 'Success!');
+          if (res.success) {
+            this.snotifyService.success(res.caption, 'Success');
             this.loadData();
           } else {
-            this.snotifyService.error('Deleting course failed on save.', 'Error');
+            this.snotifyService.error(res.caption, 'Error');
           }
-        }, error => console.error(error), () => this.coursesStore.setLoading(false));
+        }, error => console.error(error), () => this.spinnerService.hide());
     });
   }
 
@@ -107,12 +93,9 @@ export class CourseListComponent implements OnInit, OnDestroy {
   }
 
   pageChanged(event: any) {
-    this.pagination.currentPage = event.page;
-    this.loadData();
-  }
+    // Update pagination at store
+    this.coursesStore.update({ pagination: { ...this.pagination, currentPage: event.page } });
 
-  ngOnDestroy() {
-    this.unsubscribe$.next();
-    this.unsubscribe$.complete();
+    this.loadData();
   }
 }

@@ -1,13 +1,29 @@
 <form [formGroup]="form" (ngSubmit)="form.valid && onSubmit(form.getRawValue())">
   <div class="form-group">
     <label>Course Name</label>
-    <input type="text" formControlName="name" name="name" class="form-control" style="width: 400px"
-      placeholder="Enter course name..." />
+    <input type="text" formControlName="name" name="name" class="form-control" style="width: 400px" [ngClass]="{
+        'is-invalid': form.controls.name.invalid && (form.controls.name.dirty || form.controls.name.touched),
+        'is-valid': form.controls.name.valid
+      }" placeholder="Enter course name..." />
+    <span class="valid-feedback">Looks good!</span>
+    <span *ngIf="form.controls.name.errors?.required" class="invalid-feedback">
+      Please enter course name.
+    </span>
+    <span *ngIf="form.controls.name.errors?.minlength" class="invalid-feedback">
+      Please enter course name at least 5 characters.
+    </span>
   </div>
   <div class="form-group">
     <label>Description</label>
     <input type="text" formControlName="description" name="description" class="form-control" style="width: 400px"
-      placeholder="Enter description..." />
+      placeholder="Enter description..." [ngClass]="{
+        'is-invalid': form.controls.description.invalid && (form.controls.description.dirty || form.controls.description.touched),
+        'is-valid': form.controls.description.valid
+      }" />
+    <span class="valid-feedback">Nice!</span>
+    <span *ngIf="form.controls.description.errors?.required" class="invalid-feedback">
+      Please enter description.
+    </span>
   </div>
   <button [disabled]="form.invalid" class="btn btn-primary" type="submit">Update</button>
 </form>

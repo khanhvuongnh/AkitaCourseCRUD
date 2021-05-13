@@ -1,10 +1,10 @@
-using System.Linq;
 using System.Threading.Tasks;
-using CourseCRUD_API.Data;
-using CourseCRUD_API.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using CourseCRUD_API.Helpers.Utilities;
+using CourseCRUD_API._Services.Interfaces;
+using CourseCRUD_API.Dtos;
+using Microsoft.AspNetCore.SignalR;
+using CourseCRUD_API.Hubs;
 
 namespace CourseCRUD_API.Controllers
 {
@@ -12,52 +12,52 @@ namespace CourseCRUD_API.Controllers
     [Route("api/[Controller]")]
     public class CourseController : ControllerBase
     {
-        private readonly DBContext db;
+        private readonly ICourseService _courseServ;
+        private readonly IHubContext<CourseHub> _hubContext;
 
-        public CourseController(DBContext db)
+        public CourseController(ICourseService courseServ, IHubContext<CourseHub> hubContext)
         {
-            this.db = db;
+            _hubContext = hubContext;
+            _courseServ = courseServ;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
         {
-            var courses = await PageListUtility<Course>.PageListAsync(db.Course.OrderBy(x => x.Name), pagination.PageNumber, pagination.PageSize);
+            var courses = await _courseServ.GetAll(pagination);
             return Ok(courses);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Course course)
+        public async Task<IActionResult> Create([FromBody] CourseDto courseDto)
         {
-            var item = await db.Course.AnyAsync(x => x.Id == course.Id);
-            if (item)
-                return Ok(false);
+            var result = await _courseServ.Create(courseDto);
 
-            db.Course.Add(course);
-            var result = await db.SaveChangesAsync() > 0;
+            if (result.Success)
+                await _hubContext.Clients.All.SendAsync("COURSE_RELOAD", true);
+
             return Ok(result);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            var course = await db.Course.Where(x => x.Id == id).FirstOrDefaultAsync();
-            if (course == null)
-                return Ok(false);
+            var result = await _courseServ.Delete(id);
 
-            db.Course.Remove(course);
-            var result = await db.SaveChangesAsync() > 0;
+            if (result.Success)
+                await _hubContext.Clients.All.SendAsync("COURSE_RELOAD", true);
+
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] Course course)
+        [HttpPut]
+        public async Task<IActionResult> Update([FromBody] CourseDto courseDto)
         {
-            if (id != course.Id)
-                return Ok(false);
+            var result = await _courseServ.Update(courseDto);
 
-            db.Course.Update(course);
-            var result = await db.SaveChangesAsync() > 0;
+            if (result.Success)
+                await _hubContext.Clients.All.SendAsync("COURSE_RELOAD", true);
+
             return Ok(result);
         }
     }

@@ -5,6 +5,7 @@ import { CoursesStore } from '../stores/course.store';
 import { tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { Pagination, PaginationResult } from '../utilities/pagination';
+import { OperationResult } from '../utilities/operation-result';
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -29,14 +30,14 @@ export class CourseService {
   }
 
   create(course: Course) {
-    return this.http.post<boolean>(`${this.apiUrl}/Course`, course);
+    return this.http.post<OperationResult>(`${this.apiUrl}/Course`, course);
   }
 
   delete(id: string) {
-    return this.http.delete<boolean>(`${this.apiUrl}/Course/${id}`);
+    return this.http.delete<OperationResult>(`${this.apiUrl}/Course/${id}`);
   }
 
   update(course: Course) {
-    return this.http.put<boolean>(`${this.apiUrl}/Course/${course.id}`, course);
+    return this.http.put<OperationResult>(`${this.apiUrl}/Course`, course);
   }
 }
