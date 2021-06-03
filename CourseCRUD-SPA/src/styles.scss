@@ -1,7 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
 
 // Import Bootstrap
-@import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+@import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 
 // Import Snotify
-@import '../node_modules/ng-snotify/styles/material.scss';
+@import "../node_modules/ng-snotify/styles/material.scss";
+
+// Import Font Awesome
+@import "../node_modules/@fortawesome/fontawesome-free/css/all.min.css";

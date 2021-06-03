@@ -10,6 +10,7 @@ import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify
 import { SignalrService } from 'src/app/_core/services/signalr.service';
 import { CoursesStore } from 'src/app/_core/stores/course.store';
 import { Pagination } from 'src/app/_core/utilities/pagination';
+import { SortBy, SortParam } from 'src/app/_core/utilities/sort-param';
 
 @UntilDestroy()
 @Component({
@@ -21,6 +22,19 @@ export class CourseListComponent implements OnInit {
   isUpdateActivated = false;
   courses: Course[];
   pagination: Pagination;
+  sortParam: SortParam[] = [
+    {
+      sortColumn: 'name',
+      sortBy: SortBy.Asc,
+      sortClass: 'fas fa-lg fa-sort-amount-up-alt'
+    },
+    {
+      sortColumn: 'description',
+      sortBy: SortBy.Asc,
+      sortClass: 'fas fa-lg fa-sort-amount-up-alt'
+    }
+  ];
+  sortBy = SortBy;
 
   constructor(
     private courseService: CourseService,
@@ -97,5 +111,13 @@ export class CourseListComponent implements OnInit {
     this.coursesStore.update({ pagination: { ...this.pagination, currentPage: event.page } });
 
     this.loadData();
+  }
+
+  toggleSort(column: string) {
+    var index = this.sortParam.findIndex(v => v.sortColumn.includes(column));
+    let currentSortBy = this.sortParam[index].sortBy;
+    this.sortParam[index].sortBy = currentSortBy === SortBy.Asc ? SortBy.Desc : SortBy.Asc;
+    this.sortParam[index].sortClass = currentSortBy === SortBy.Asc ? 'fas fa-lg fa-sort-amount-up-alt' : 'fas fa-lg fa-sort-amount-down';
+    console.log(this.sortParam[index])
   }
 }
