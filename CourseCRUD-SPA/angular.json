@@ -39,7 +39,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "D:/Build/Learning/CourseCRUD/Release 20210511/Course-SPA",
+            "outputPath": "D:/01. Source Code/CourseCRUD/CourseCRUD-SPA",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
