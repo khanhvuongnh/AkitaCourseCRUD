@@ -10,31 +10,32 @@ import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify
 import { SignalrService } from 'src/app/_core/services/signalr.service';
 import { CoursesStore } from 'src/app/_core/stores/course.store';
 import { Pagination } from 'src/app/_core/utilities/pagination';
-import { SortBy, SortParam } from 'src/app/_core/utilities/sort-param';
+import { SortBy, SortClass, SortParams } from 'src/app/_core/utilities/sort-param';
 
 @UntilDestroy()
 @Component({
   selector: 'app-courses-list',
-  templateUrl: './course-list.component.html'
+  templateUrl: './course-list.component.html',
 })
 export class CourseListComponent implements OnInit {
   courseToBeUpdated: Course;
   isUpdateActivated = false;
   courses: Course[];
   pagination: Pagination;
-  sortParam: SortParam[] = [
+  sortColumn = SortColumn;
+  sortBy = SortBy;
+  sortParam: SortParams[] = [
     {
-      sortColumn: 'name',
+      sortColumn: SortColumn.Name,
       sortBy: SortBy.Asc,
-      sortClass: 'fas fa-lg fa-sort-amount-up-alt'
+      sortClass: SortClass.Asc
     },
     {
-      sortColumn: 'description',
+      sortColumn: SortColumn.Description,
       sortBy: SortBy.Asc,
-      sortClass: 'fas fa-lg fa-sort-amount-up-alt'
+      sortClass: SortClass.Asc
     }
   ];
-  sortBy = SortBy;
 
   constructor(
     private courseService: CourseService,
@@ -71,11 +72,11 @@ export class CourseListComponent implements OnInit {
   loadData() {
     let pagination = { ...this.pagination };
     this.courseService
-      .getAll(this.pagination)
+      .getAll(this.pagination, this.sortParam)
       .pipe(
         switchMap(res => {
           pagination.currentPage = res.pagination.currentPage > res.pagination.totalPage ? res.pagination.totalPage : res.pagination.currentPage;
-          return this.courseService.getAll(pagination)
+          return this.courseService.getAll(pagination, this.sortParam)
         }),
         untilDestroyed(this))
       .subscribe();
@@ -113,11 +114,16 @@ export class CourseListComponent implements OnInit {
     this.loadData();
   }
 
-  toggleSort(column: string) {
-    var index = this.sortParam.findIndex(v => v.sortColumn.includes(column));
+  toggleSort(column: SortColumn) {
+    var index = this.sortParam.findIndex(v => v.sortColumn === column);
     let currentSortBy = this.sortParam[index].sortBy;
     this.sortParam[index].sortBy = currentSortBy === SortBy.Asc ? SortBy.Desc : SortBy.Asc;
-    this.sortParam[index].sortClass = currentSortBy === SortBy.Asc ? 'fas fa-lg fa-sort-amount-up-alt' : 'fas fa-lg fa-sort-amount-down';
-    console.log(this.sortParam[index])
+    this.sortParam[index].sortClass = currentSortBy === SortBy.Asc ? SortClass.Desc : SortClass.Asc;
+    this.loadData();
   }
 }
+
+enum SortColumn {
+  Name = 'Name',
+  Description = 'Description'
+};

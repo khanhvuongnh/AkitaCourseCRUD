@@ -2,16 +2,16 @@
   <table class="table table-hover table-bordered">
     <thead class="thead-dark">
       <tr>
-        <th scope="col" style="cursor: pointer;" (click)="toggleSort('name')">
+        <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Name)">
           <div class="d-flex justify-content-between">
             <span>Name</span>
             <i [class]="sortParam[0].sortClass"></i>
           </div>
         </th>
-        <th scope="col" style="cursor: pointer;" (click)="toggleSort('description')">
+        <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Description)">
           <div class="d-flex justify-content-between">
             <span>Description</span>
-            <i class="fas fa-lg fa-sort-amount-up-alt"></i>
+            <i [class]="sortParam[1].sortClass"></i>
           </div>
         </th>
         <th scope="col">
@@ -24,8 +24,12 @@
         <td>{{ course.name }}</td>
         <td>{{ course.description }}</td>
         <td>
-          <button (click)="goToUpdate(course.id)" class="btn btn-primary mr-1">Update</button>
-          <button (click)="deleteCourse(course.id)" class="btn btn-danger">Delete</button>
+          <button (click)="goToUpdate(course.id)" class="btn btn-sm btn-primary mr-1">
+            <i class="fa fa-edit"></i> Update
+          </button>
+          <button (click)="deleteCourse(course.id)" class="btn btn-sm btn-danger">
+            <i class="fa fa-trash-o"></i> Delete
+          </button>
         </td>
       </tr>
       <tr *ngIf="courses.length === 0">

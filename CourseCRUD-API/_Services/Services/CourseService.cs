@@ -62,9 +62,27 @@ namespace CourseCRUD_API._Services.Services
             }
         }
 
-        public async Task<PageListUtility<Course>> GetAll(PaginationParams pagination)
+        public async Task<PageListUtility<Course>> GetAll(SortParams[] sorts, PaginationParams pagination)
         {
-            var courseQuery = _courseRepo.FindAll().OrderBy(x => x.Name);
+            var courseQuery = _courseRepo.FindAll().OrderBy(x => 0);
+
+            foreach (var sort in sorts)
+            {
+                switch (sort.SortColumn)
+                {
+                    case nameof(Course.Name):
+                        courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Name) : courseQuery.ThenByDescending(x => x.Name);
+                        break;
+
+                    case nameof(Course.Description):
+                        courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Description) : courseQuery.ThenByDescending(x => x.Description);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
             var courses = await PageListUtility<Course>.PageListAsync(courseQuery, pagination.PageNumber, pagination.PageSize);
 
             return courses;

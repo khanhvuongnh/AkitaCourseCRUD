@@ -21,10 +21,10 @@ namespace CourseCRUD_API.Controllers
             _courseServ = courseServ;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
+        [HttpPost("GetAll")]
+        public async Task<IActionResult> GetAll(SortParams[] sorts, [FromQuery] PaginationParams pagination)
         {
-            var courses = await _courseServ.GetAll(pagination);
+            var courses = await _courseServ.GetAll(sorts, pagination);
             return Ok(courses);
         }
 

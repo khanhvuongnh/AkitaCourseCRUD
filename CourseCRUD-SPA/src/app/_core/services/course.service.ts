@@ -6,6 +6,7 @@ import { tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { Pagination, PaginationResult } from '../utilities/pagination';
 import { OperationResult } from '../utilities/operation-result';
+import { SortParams } from '../utilities/sort-param';
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -16,12 +17,12 @@ export class CourseService {
     private coursesStore: CoursesStore
   ) { }
 
-  getAll(pagination: Pagination) {
+  getAll(pagination: Pagination, sort: SortParams[]) {
     let params = new HttpParams()
       .set('pageNumber', pagination.currentPage.toString())
       .set('pageSize', pagination.pageSize.toString());
 
-    return this.http.get<PaginationResult<Course>>(`${this.apiUrl}/Course`, { params }).pipe(
+    return this.http.post<PaginationResult<Course>>(`${this.apiUrl}/Course/GetAll`, sort, { params }).pipe(
       tap(res => {
         this.coursesStore.set(res.result);
         this.coursesStore.update({ pagination: res.pagination });

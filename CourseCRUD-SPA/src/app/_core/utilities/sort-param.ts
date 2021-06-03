@@ -1,10 +1,15 @@
-export interface SortParam {
+export interface SortParams {
   sortColumn: string;
   sortBy: SortBy;
-  sortClass?: string;
+  sortClass?: SortClass;
 }
 
 export enum SortBy {
-  Asc,
-  Desc
+  Asc = 'ASC',
+  Desc = 'DESC'
+};
+
+export enum SortClass {
+  Asc = 'fa fa-sort-amount-asc',
+  Desc = 'fa fa-sort-amount-desc'
 };

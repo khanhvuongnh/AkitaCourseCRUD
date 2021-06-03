@@ -7,7 +7,7 @@ namespace CourseCRUD_API._Services.Interfaces
 {
     public interface ICourseService
     {
-        Task<PageListUtility<Course>> GetAll(PaginationParams pagination);
+        Task<PageListUtility<Course>> GetAll(SortParams[] sorts, PaginationParams pagination);
 
         Task<OperationResult> Create(CourseDto courseDto);
 
