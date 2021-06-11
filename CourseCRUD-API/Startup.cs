@@ -47,8 +47,10 @@ namespace CourseCRUD_API
             services.AddSingleton(AutoMapperConfig.RegisterMappings());
 
             services.AddScoped<ICourseRepository, CourseRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             services.AddScoped<ICourseService, CourseService>();
+            services.AddScoped<ICategoryService, CategoryService>();
 
             services.AddSignalR();
         }

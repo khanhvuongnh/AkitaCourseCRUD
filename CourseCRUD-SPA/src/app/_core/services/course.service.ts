@@ -6,7 +6,9 @@ import { tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { Pagination, PaginationResult } from '../utilities/pagination';
 import { OperationResult } from '../utilities/operation-result';
-import { SortParams } from '../utilities/sort-param';
+import { MinMaxPrice } from '../utilities/min-max-price';
+import { FilterParam } from '../utilities/filter-param';
+import { SearchParam, SortParam } from '../utilities/search-param';
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -14,15 +16,16 @@ export class CourseService {
 
   constructor(
     private http: HttpClient,
-    private coursesStore: CoursesStore
-  ) { }
+    private coursesStore: CoursesStore) { }
 
-  getAll(pagination: Pagination, sort: SortParams[]) {
+  getAll(pagination: Pagination, sortParams: SortParam[], filterParam: FilterParam) {
     let params = new HttpParams()
       .set('pageNumber', pagination.currentPage.toString())
       .set('pageSize', pagination.pageSize.toString());
 
-    return this.http.post<PaginationResult<Course>>(`${this.apiUrl}/Course/GetAll`, sort, { params }).pipe(
+    let search: SearchParam = { filterParam, sortParams }
+
+    return this.http.post<PaginationResult<Course>>(`${this.apiUrl}/Course/GetAll`, search, { params }).pipe(
       tap(res => {
         this.coursesStore.set(res.result);
         this.coursesStore.update({ pagination: res.pagination });
@@ -40,5 +43,9 @@ export class CourseService {
 
   update(course: Course) {
     return this.http.put<OperationResult>(`${this.apiUrl}/Course`, course);
+  }
+
+  getMinMaxPrice() {
+    return this.http.get<MinMaxPrice>(`${this.apiUrl}/Course/MinMaxPrice`);
   }
 }

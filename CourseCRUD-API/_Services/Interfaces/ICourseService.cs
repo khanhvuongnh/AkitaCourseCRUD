@@ -7,12 +7,14 @@ namespace CourseCRUD_API._Services.Interfaces
 {
     public interface ICourseService
     {
-        Task<PageListUtility<Course>> GetAll(SortParams[] sorts, PaginationParams pagination);
+        Task<PageListUtility<CourseDto>> GetAll(SearchParam search, PaginationParam pagination);
 
         Task<OperationResult> Create(CourseDto courseDto);
 
         Task<OperationResult> Delete(string id);
 
         Task<OperationResult> Update(CourseDto courseDto);
+
+        Task<MinMaxPriceDto> GetMinMaxPrice();
     }
 }

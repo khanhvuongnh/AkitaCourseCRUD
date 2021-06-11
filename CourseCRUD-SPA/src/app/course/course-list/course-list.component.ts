@@ -2,15 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { switchMap } from 'rxjs/operators';
 import { Course } from 'src/app/_core/models/course.model';
 import { CoursesQuery } from 'src/app/_core/queries/course.query';
+import { CategoryService } from 'src/app/_core/services/category.service';
 import { CourseService } from 'src/app/_core/services/course.service';
 import { CustomNgSnotifyService } from 'src/app/_core/services/custom-ng-snotify.service';
 import { SignalrService } from 'src/app/_core/services/signalr.service';
 import { CoursesStore } from 'src/app/_core/stores/course.store';
+import { FilterParam } from 'src/app/_core/utilities/filter-param';
+import { KeyValuePair } from 'src/app/_core/utilities/key-value-pair';
+import { MinMaxPrice } from 'src/app/_core/utilities/min-max-price';
 import { Pagination } from 'src/app/_core/utilities/pagination';
-import { SortBy, SortClass, SortParams } from 'src/app/_core/utilities/sort-param';
+import { SortBy, SortClass, SortParam } from 'src/app/_core/utilities/search-param';
 
 @UntilDestroy()
 @Component({
@@ -20,11 +23,13 @@ import { SortBy, SortClass, SortParams } from 'src/app/_core/utilities/sort-para
 export class CourseListComponent implements OnInit {
   courseToBeUpdated: Course;
   isUpdateActivated = false;
-  courses: Course[];
+  courses: Course[] = [];
+  categories: KeyValuePair[];
   pagination: Pagination;
   sortColumn = SortColumn;
   sortBy = SortBy;
-  sortParam: SortParams[] = [
+  minMaxPrice: MinMaxPrice = <MinMaxPrice>{};
+  sortParams: SortParam[] = [
     {
       sortColumn: SortColumn.Name,
       sortBy: SortBy.Asc,
@@ -34,8 +39,18 @@ export class CourseListComponent implements OnInit {
       sortColumn: SortColumn.Description,
       sortBy: SortBy.Asc,
       sortClass: SortClass.Asc
+    },
+    {
+      sortColumn: SortColumn.Price,
+      sortBy: SortBy.Asc,
+      sortClass: SortClass.Asc
     }
   ];
+  filterParam: FilterParam = {
+    keyword: '',
+    category_ID: 0,
+    price: null
+  };
 
   constructor(
     private courseService: CourseService,
@@ -44,42 +59,60 @@ export class CourseListComponent implements OnInit {
     private snotifyService: CustomNgSnotifyService,
     private coursesStore: CoursesStore,
     private router: Router,
-    private signalRService: SignalrService
-  ) { }
+    private signalRService: SignalrService,
+    private categoryService: CategoryService) { }
 
   ngOnInit() {
-    // Create a 'entities' subscription
+    // Create courses subscription
     this.coursesQuery
       .selectAll()
       .pipe(untilDestroyed(this))
       .subscribe(courses => this.courses = courses);
 
-    // Create a 'pagination' subscription
+    // Create pagination subscription
     this.coursesQuery
       .select(state => state.pagination)
       .pipe(untilDestroyed(this))
       .subscribe(pagination => this.pagination = pagination);
 
-    // Create a 'signalR' subscription
+    // Create categories subscription
+    this.coursesQuery
+      .select(state => state.categories)
+      .pipe(untilDestroyed(this))
+      .subscribe(categories => this.categories = categories);
+
+    // Create signalr subscription
     this.signalRService.courseReload
       .pipe(untilDestroyed(this))
-      .subscribe(isReload => { if (isReload) this.loadData() });
+      .subscribe(isReload => { if (isReload) this.getData() });
 
-    // Load data
-    this.loadData();
+    this.getMinMaxPrice();
+    this.getCategories();
+    this.getData();
   }
 
-  loadData() {
-    let pagination = { ...this.pagination };
+  getData() {
     this.courseService
-      .getAll(this.pagination, this.sortParam)
-      .pipe(
-        switchMap(res => {
-          pagination.currentPage = res.pagination.currentPage > res.pagination.totalPage ? res.pagination.totalPage : res.pagination.currentPage;
-          return this.courseService.getAll(pagination, this.sortParam)
-        }),
-        untilDestroyed(this))
+      .getAll(this.pagination, this.sortParams, this.filterParam)
+      .pipe(untilDestroyed(this))
       .subscribe();
+  }
+
+  getCategories() {
+    this.categoryService
+      .getKVCategories()
+      .pipe(untilDestroyed(this))
+      .subscribe();
+  }
+
+  getMinMaxPrice() {
+    this.courseService
+      .getMinMaxPrice()
+      .pipe(untilDestroyed(this))
+      .subscribe(res => {
+        this.minMaxPrice = res;
+        this.filterParam.price = this.minMaxPrice.maxPrice;
+      });
   }
 
   deleteCourse(id: string) {
@@ -89,13 +122,24 @@ export class CourseListComponent implements OnInit {
         .delete(id)
         .pipe(untilDestroyed(this))
         .subscribe(res => {
+          this.spinnerService.hide();
           if (res.success) {
             this.snotifyService.success(res.caption, 'Success');
-            this.loadData();
+            if (
+              this.pagination.currentPage >= this.pagination.totalPage &&
+              this.pagination.totalPage > 1 &&
+              this.pagination.totalCount - (this.pagination.currentPage - 1) * this.pagination.pageSize === 1) {
+              this.pagination.currentPage -= 1;
+            }
+            this.getMinMaxPrice();
+            this.getData();
           } else {
             this.snotifyService.error(res.caption, 'Error');
           }
-        }, error => console.error(error), () => this.spinnerService.hide());
+        }, error => {
+          console.log(error);
+          this.spinnerService.hide();
+        });
     });
   }
 
@@ -111,19 +155,48 @@ export class CourseListComponent implements OnInit {
     // Update pagination at store
     this.coursesStore.update({ pagination: { ...this.pagination, currentPage: event.page } });
 
-    this.loadData();
+    this.getData();
   }
 
   toggleSort(column: SortColumn) {
-    var index = this.sortParam.findIndex(v => v.sortColumn === column);
-    let currentSortBy = this.sortParam[index].sortBy;
-    this.sortParam[index].sortBy = currentSortBy === SortBy.Asc ? SortBy.Desc : SortBy.Asc;
-    this.sortParam[index].sortClass = currentSortBy === SortBy.Asc ? SortClass.Desc : SortClass.Asc;
-    this.loadData();
+    var index = this.sortParams.findIndex(v => v.sortColumn === column);
+    let currentSortBy = this.sortParams[index].sortBy;
+    this.sortParams[index].sortBy = currentSortBy === SortBy.Asc ? SortBy.Desc : SortBy.Asc;
+    this.sortParams[index].sortClass = currentSortBy === SortBy.Asc ? SortClass.Desc : SortClass.Asc;
+
+    this.getData();
+  }
+
+  clearSearch() {
+    this.filterParam = {
+      keyword: '',
+      category_ID: 0,
+      price: this.minMaxPrice.maxPrice
+    };
+    this.sortParams = [
+      {
+        sortColumn: SortColumn.Name,
+        sortBy: SortBy.Asc,
+        sortClass: SortClass.Asc
+      },
+      {
+        sortColumn: SortColumn.Description,
+        sortBy: SortBy.Asc,
+        sortClass: SortClass.Asc
+      },
+      {
+        sortColumn: SortColumn.Price,
+        sortBy: SortBy.Asc,
+        sortClass: SortClass.Asc
+      }
+    ];
+
+    this.getData();
   }
 }
 
 enum SortColumn {
   Name = 'Name',
-  Description = 'Description'
+  Description = 'Description',
+  Price = 'Price'
 };

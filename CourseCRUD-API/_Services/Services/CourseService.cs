@@ -6,6 +6,7 @@ using CourseCRUD_API._Services.Interfaces;
 using CourseCRUD_API.Dtos;
 using CourseCRUD_API.Helpers.Utilities;
 using CourseCRUD_API.Models;
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseCRUD_API._Services.Services
@@ -14,11 +15,14 @@ namespace CourseCRUD_API._Services.Services
     {
         private readonly ICourseRepository _courseRepo;
         private readonly IMapper _mapper;
+        private readonly ICategoryRepository _categoryRepo;
 
         public CourseService(
             ICourseRepository courseRepo,
+            ICategoryRepository categoryRepo,
             IMapper mapper)
         {
+            _categoryRepo = categoryRepo;
             _courseRepo = courseRepo;
             _mapper = mapper;
         }
@@ -62,11 +66,44 @@ namespace CourseCRUD_API._Services.Services
             }
         }
 
-        public async Task<PageListUtility<Course>> GetAll(SortParams[] sorts, PaginationParams pagination)
+        public async Task<PageListUtility<CourseDto>> GetAll(SearchParam search, PaginationParam pagination)
         {
-            var courseQuery = _courseRepo.FindAll().OrderBy(x => 0);
+            var pred = PredicateBuilder.New<Course>(true);
 
-            foreach (var sort in sorts)
+            if (!string.IsNullOrEmpty(search.FilterParam.Keyword))
+            {
+                var keyword = search.FilterParam.Keyword.Trim().ToLower();
+                pred = pred.And(x =>
+                    x.Name.ToLower().Contains(keyword) ||
+                    x.Description.ToLower().Contains(keyword));
+            }
+
+            if (search.FilterParam.Category_ID != null && search.FilterParam.Category_ID > 0)
+            {
+                var category_ID = search.FilterParam.Category_ID;
+                pred = pred.And(x => x.Category_ID == category_ID);
+            }
+
+            if (search.FilterParam.Price != null)
+            {
+                var price = search.FilterParam.Price.Value;
+                pred = pred.And(x => x.Price <= price);
+            }
+
+            var courseQuery = _courseRepo
+                .FindAll(pred)
+                .Join(_categoryRepo.FindAll(), x => x.Category_ID, y => y.Category_ID, (x, y) => new CourseDto
+                {
+                    Category_ID = x.Category_ID,
+                    Category_Name = y.Category_Name,
+                    Description = x.Description,
+                    Id = x.Id,
+                    Name = x.Name,
+                    Price = x.Price
+                })
+                .OrderBy(x => 0);
+
+            foreach (var sort in search.SortParams)
             {
                 switch (sort.SortColumn)
                 {
@@ -78,14 +115,30 @@ namespace CourseCRUD_API._Services.Services
                         courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Description) : courseQuery.ThenByDescending(x => x.Description);
                         break;
 
+                    case nameof(Course.Price):
+                        courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Price) : courseQuery.ThenByDescending(x => x.Price);
+                        break;
+
                     default:
+                        courseQuery = courseQuery.ThenBy(x => x.Name);
                         break;
                 }
             }
 
-            var courses = await PageListUtility<Course>.PageListAsync(courseQuery, pagination.PageNumber, pagination.PageSize);
+            var courses = await PageListUtility<CourseDto>.PageListAsync(courseQuery, pagination.PageNumber, pagination.PageSize);
 
             return courses;
+        }
+
+        public async Task<MinMaxPriceDto> GetMinMaxPrice()
+        {
+            var result = new MinMaxPriceDto
+            {
+                MaxPrice = await _courseRepo.FindAll().MaxAsync(x => x.Price),
+                MinPrice = await _courseRepo.FindAll().MinAsync(x => x.Price)
+            };
+
+            return result;
         }
 
         public async Task<OperationResult> Update(CourseDto courseDto)

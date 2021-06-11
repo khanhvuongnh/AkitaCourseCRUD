@@ -1,20 +1,21 @@
 import { Injectable } from '@angular/core';
 import { EntityState, EntityStore, StoreConfig } from '@datorama/akita';
 import { Course } from '../models/course.model';
+import { KeyValuePair } from '../utilities/key-value-pair';
 import { Pagination } from '../utilities/pagination';
 
 export interface CoursesState extends EntityState<Course, string> {
-  pagination: Pagination
+  pagination: Pagination,
+  categories: KeyValuePair[]
 }
 
 export function createInitialState(): CoursesState {
   return {
-    pagination: {
+    pagination: <Pagination>{
       currentPage: 1,
-      pageSize: 10,
-      totalCount: 0,
-      totalPage: 0
-    }
+      pageSize: 10
+    },
+    categories: []
   };
 }
 

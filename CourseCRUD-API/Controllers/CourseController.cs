@@ -22,9 +22,9 @@ namespace CourseCRUD_API.Controllers
         }
 
         [HttpPost("GetAll")]
-        public async Task<IActionResult> GetAll(SortParams[] sorts, [FromQuery] PaginationParams pagination)
+        public async Task<IActionResult> GetAll(SearchParam search, [FromQuery] PaginationParam pagination)
         {
-            var courses = await _courseServ.GetAll(sorts, pagination);
+            var courses = await _courseServ.GetAll(search, pagination);
             return Ok(courses);
         }
 
@@ -57,6 +57,14 @@ namespace CourseCRUD_API.Controllers
 
             if (result.Success)
                 await _hubContext.Clients.All.SendAsync("COURSE_RELOAD", true);
+
+            return Ok(result);
+        }
+
+        [HttpGet("MinMaxPrice")]
+        public async Task<IActionResult> GetMinMaxPrice()
+        {
+            var result = await _courseServ.GetMinMaxPrice();
 
             return Ok(result);
         }

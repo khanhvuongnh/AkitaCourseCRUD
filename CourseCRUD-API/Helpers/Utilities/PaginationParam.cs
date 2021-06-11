@@ -1,6 +1,6 @@
 namespace CourseCRUD_API.Helpers.Utilities
 {
-    public class PaginationParams
+    public class PaginationParam
     {
         private const int MaxPageSize = 50;
         public int PageNumber { get; set; } = 1;

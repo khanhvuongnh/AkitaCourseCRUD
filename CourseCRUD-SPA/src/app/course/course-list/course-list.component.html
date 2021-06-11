@@ -1,42 +1,92 @@
 <div>
-  <table class="table table-hover table-bordered">
-    <thead class="thead-dark">
-      <tr>
-        <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Name)">
-          <div class="d-flex justify-content-between">
-            <span>Name</span>
-            <i [class]="sortParam[0].sortClass"></i>
-          </div>
-        </th>
-        <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Description)">
-          <div class="d-flex justify-content-between">
-            <span>Description</span>
-            <i [class]="sortParam[1].sortClass"></i>
-          </div>
-        </th>
-        <th scope="col">
-          <span>Actions</span>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let course of courses">
-        <td>{{ course.name }}</td>
-        <td>{{ course.description }}</td>
-        <td>
-          <button (click)="goToUpdate(course.id)" class="btn btn-sm btn-primary mr-1">
-            <i class="fa fa-edit"></i> Update
-          </button>
-          <button (click)="deleteCourse(course.id)" class="btn btn-sm btn-danger">
-            <i class="fa fa-trash-o"></i> Delete
-          </button>
-        </td>
-      </tr>
-      <tr *ngIf="courses.length === 0">
-        <td class="table-warning text-center font-weight-bold" colspan="100%">NO DATA!</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="form-row form-group">
+    <div class="col-3">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text"> <i class="fa fa-search"></i> </span>
+        </div>
+        <input type="text" name="keyword" [(ngModel)]="filterParam.keyword" class="form-control"
+          placeholder="Type here to search...">
+      </div>
+    </div>
+    <div class="col-2">
+      <select class="form-control" name="category_ID" [(ngModel)]="filterParam.category_ID">
+        <option *ngFor="let category of categories" [value]="category.key">{{ category.value }}</option>
+      </select>
+    </div>
+    <div class="col-3">
+      <div class="d-flex align-items-center" style="height: 100%;">
+        <input type="range" class="form-control-range" [min]="minMaxPrice.minPrice" [max]="minMaxPrice.maxPrice"
+          name="price" [(ngModel)]="filterParam.price">
+      </div>
+    </div>
+    <div class="col-1">
+      <div class="d-flex align-items-center" style="height: 100%;">
+        {{ filterParam.price | currency }}
+      </div>
+    </div>
+    <div class="col-2">
+      <button class="btn btn-success" (click)="getData()">Search</button>
+      <button class="btn btn-secondary ml-1" (click)="clearSearch()"><i class="fa fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead class="thead-dark text-center">
+        <tr>
+          <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Name)">
+            <div class="d-flex justify-content-between">
+              <span>Name</span>
+              <i [class]="sortParams[0].sortClass"></i>
+            </div>
+          </th>
+          <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Description)">
+            <div class="d-flex justify-content-between">
+              <span>Description</span>
+              <i [class]="sortParams[1].sortClass"></i>
+            </div>
+          </th>
+          <th scope="col">
+            <div>
+              <span>Category</span>
+            </div>
+          </th>
+          <th scope="col" style="cursor: pointer;" (click)="toggleSort(sortColumn.Price)">
+            <div class="d-flex justify-content-between">
+              <span>Price</span>
+              <i [class]="sortParams[2].sortClass"></i>
+            </div>
+          </th>
+          <th scope="col" colspan="2">
+            <span>Action</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let course of courses">
+          <td>{{ course.name }}</td>
+          <td>{{ course.description }}</td>
+          <td>{{ course.category_Name }}</td>
+          <td>{{ course.price | currency }}</td>
+          <td style="width: 1px;">
+            <button (click)="goToUpdate(course.id)" class="btn btn-sm btn-primary mr-1">
+              <i class="fa fa-edit px-3"></i>
+            </button>
+          </td>
+          <td style="width: 1px;">
+            <button (click)="deleteCourse(course.id)" class="btn btn-sm btn-danger">
+              <i class="fa fa-trash-o px-3"></i>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="courses.length === 0">
+          <td class="table-warning text-center font-weight-bold" colspan="100%">DATA NOT FOUND</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <pagination *ngIf="pagination.totalPage > 1" [boundaryLinks]="true" [totalItems]="pagination.totalCount"
     [(ngModel)]="pagination.currentPage"
     [itemsPerPage]="pagination.pageSize" (pageChanged)="pageChanged($event)" previousText="&lsaquo;"
