@@ -1,6 +1,6 @@
 <div>
-  <div class="form-row form-group">
-    <div class="col-3">
+  <div class="form-row">
+    <div class="col-6 col-lg-3 form-group">
       <div class="input-group">
         <div class="input-group-prepend">
           <span class="input-group-text"> <i class="fa fa-search"></i> </span>
@@ -9,23 +9,23 @@
           placeholder="Type here to search...">
       </div>
     </div>
-    <div class="col-2">
+    <div class="col-6 col-lg-2 form-group">
       <select class="form-control" name="category_ID" [(ngModel)]="filterParam.category_ID">
         <option *ngFor="let category of categories" [value]="category.key">{{ category.value }}</option>
       </select>
     </div>
-    <div class="col-3">
+    <div class="col-6 col-lg-3 form-group">
       <div class="d-flex align-items-center" style="height: 100%;">
         <input type="range" class="form-control-range" [min]="minMaxPrice.minPrice" [max]="minMaxPrice.maxPrice"
           name="price" [(ngModel)]="filterParam.price">
       </div>
     </div>
-    <div class="col-1">
+    <div class="col-2 col-lg-1 form-group">
       <div class="d-flex align-items-center" style="height: 100%;">
         {{ filterParam.price | currency }}
       </div>
     </div>
-    <div class="col-2">
+    <div class="col-4 col-lg-2 form-group">
       <button class="btn btn-success" (click)="getData()">Search</button>
       <button class="btn btn-secondary ml-1" (click)="clearSearch()"><i class="fa fa-times"></i></button>
     </div>

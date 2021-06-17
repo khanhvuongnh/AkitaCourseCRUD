@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-
 namespace CourseCRUD_API.Helpers.Utilities
 {
     public class SearchParam
     {
-        public List<SortParam> SortParams { get; set; }
+        public SortParam SortParam { get; set; }
         public FilterParam FilterParam { get; set; }
     }
 

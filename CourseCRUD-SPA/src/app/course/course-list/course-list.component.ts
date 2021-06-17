@@ -46,6 +46,7 @@ export class CourseListComponent implements OnInit {
       sortClass: SortClass.Asc
     }
   ];
+  sortParamIndex: number = 0;
   filterParam: FilterParam = {
     keyword: '',
     category_ID: 0,
@@ -93,7 +94,7 @@ export class CourseListComponent implements OnInit {
 
   getData() {
     this.courseService
-      .getAll(this.pagination, this.sortParams, this.filterParam)
+      .getAll(this.pagination, this.sortParams[this.sortParamIndex], this.filterParam)
       .pipe(untilDestroyed(this))
       .subscribe();
   }
@@ -163,6 +164,7 @@ export class CourseListComponent implements OnInit {
     let currentSortBy = this.sortParams[index].sortBy;
     this.sortParams[index].sortBy = currentSortBy === SortBy.Asc ? SortBy.Desc : SortBy.Asc;
     this.sortParams[index].sortClass = currentSortBy === SortBy.Asc ? SortClass.Desc : SortClass.Asc;
+    this.sortParamIndex = index;
 
     this.getData();
   }

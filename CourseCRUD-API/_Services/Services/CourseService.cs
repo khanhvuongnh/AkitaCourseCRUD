@@ -100,30 +100,28 @@ namespace CourseCRUD_API._Services.Services
                     Id = x.Id,
                     Name = x.Name,
                     Price = x.Price
-                })
-                .OrderBy(x => 0);
+                });
 
-            foreach (var sort in search.SortParams)
+
+            switch (search.SortParam.SortColumn)
             {
-                switch (sort.SortColumn)
-                {
-                    case nameof(Course.Name):
-                        courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Name) : courseQuery.ThenByDescending(x => x.Name);
-                        break;
+                case nameof(Course.Name):
+                    courseQuery = search.SortParam.SortBy == SortBy.Asc ? courseQuery.OrderBy(x => x.Name) : courseQuery.OrderByDescending(x => x.Name);
+                    break;
 
-                    case nameof(Course.Description):
-                        courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Description) : courseQuery.ThenByDescending(x => x.Description);
-                        break;
+                case nameof(Course.Description):
+                    courseQuery = search.SortParam.SortBy == SortBy.Asc ? courseQuery.OrderBy(x => x.Description) : courseQuery.OrderByDescending(x => x.Description);
+                    break;
 
-                    case nameof(Course.Price):
-                        courseQuery = sort.SortBy == SortBy.Asc ? courseQuery.ThenBy(x => x.Price) : courseQuery.ThenByDescending(x => x.Price);
-                        break;
+                case nameof(Course.Price):
+                    courseQuery = search.SortParam.SortBy == SortBy.Asc ? courseQuery.OrderBy(x => x.Price) : courseQuery.OrderByDescending(x => x.Price);
+                    break;
 
-                    default:
-                        courseQuery = courseQuery.ThenBy(x => x.Name);
-                        break;
-                }
+                default:
+                    courseQuery = courseQuery.OrderBy(x => x.Name);
+                    break;
             }
+
 
             var courses = await PageListUtility<CourseDto>.PageListAsync(courseQuery, pagination.PageNumber, pagination.PageSize);
 

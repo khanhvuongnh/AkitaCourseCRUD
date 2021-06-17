@@ -1,5 +1,5 @@
 export interface SearchParam {
-  sortParams: SortParam[];
+  sortParam: SortParam;
   filterParam: FilterParam;
 }
 

@@ -18,12 +18,12 @@ export class CourseService {
     private http: HttpClient,
     private coursesStore: CoursesStore) { }
 
-  getAll(pagination: Pagination, sortParams: SortParam[], filterParam: FilterParam) {
+  getAll(pagination: Pagination, sortParam: SortParam, filterParam: FilterParam) {
     let params = new HttpParams()
       .set('pageNumber', pagination.currentPage.toString())
       .set('pageSize', pagination.pageSize.toString());
 
-    let search: SearchParam = { filterParam, sortParams }
+    let search: SearchParam = { filterParam, sortParam }
 
     return this.http.post<PaginationResult<Course>>(`${this.apiUrl}/Course/GetAll`, search, { params }).pipe(
       tap(res => {
