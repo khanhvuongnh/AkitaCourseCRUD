@@ -64,29 +64,7 @@ export class CourseListComponent implements OnInit {
     private categoryService: CategoryService) { }
 
   ngOnInit() {
-    // Create courses subscription
-    this.coursesQuery
-      .selectAll()
-      .pipe(untilDestroyed(this))
-      .subscribe(courses => this.courses = courses);
-
-    // Create pagination subscription
-    this.coursesQuery
-      .select(state => state.pagination)
-      .pipe(untilDestroyed(this))
-      .subscribe(pagination => this.pagination = pagination);
-
-    // Create categories subscription
-    this.coursesQuery
-      .select(state => state.categories)
-      .pipe(untilDestroyed(this))
-      .subscribe(categories => this.categories = categories);
-
-    // Create signalr subscription
-    this.signalRService.courseReload
-      .pipe(untilDestroyed(this))
-      .subscribe(isReload => { if (isReload) this.getData() });
-
+    this.initSubscription()
     this.getMinMaxPrice();
     this.getCategories();
     this.getData();
@@ -97,6 +75,11 @@ export class CourseListComponent implements OnInit {
       .getAll(this.pagination, this.sortParams[this.sortParamIndex], this.filterParam)
       .pipe(untilDestroyed(this))
       .subscribe();
+  }
+
+  search() {
+    this.pagination.currentPage = 1;
+    this.getData();
   }
 
   getCategories() {
@@ -194,6 +177,31 @@ export class CourseListComponent implements OnInit {
     ];
 
     this.getData();
+  }
+
+  initSubscription() {
+    // Create courses subscription
+    this.coursesQuery
+      .selectAll()
+      .pipe(untilDestroyed(this))
+      .subscribe(courses => this.courses = courses);
+
+    // Create pagination subscription
+    this.coursesQuery
+      .select(state => state.pagination)
+      .pipe(untilDestroyed(this))
+      .subscribe(pagination => this.pagination = pagination);
+
+    // Create categories subscription
+    this.coursesQuery
+      .select(state => state.categories)
+      .pipe(untilDestroyed(this))
+      .subscribe(categories => this.categories = categories);
+
+    // Create signalr subscription
+    this.signalRService.courseReload
+      .pipe(untilDestroyed(this))
+      .subscribe(isReload => { if (isReload) this.getData() });
   }
 }
 
